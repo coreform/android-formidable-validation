@@ -1,0 +1,408 @@
+package com.coreform.open.android.formidablevalidation;
+
+import android.content.Context;
+import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
+import android.text.Layout;
+import android.text.StaticLayout;
+import android.text.TextUtils;
+import android.util.AttributeSet;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.PopupWindow;
+import android.widget.TextView;
+
+public class SetErrorHandler {
+	private View mView;
+	private int mTop;
+	private int mBottom;
+	private int mLeft;
+	private int mRight;
+	private int mPaddingTop;
+	private int mPaddingBottom;
+	private int mPaddingLeft;
+	private int mPaddingRight;
+	private int mErrorPopupPaddingTop;
+	private int mErrorPopupPaddingBottom;
+	private int mErrorPopupPaddingLeft;
+	private int mErrorPopupPaddingRight;
+	
+	class Drawables {
+		final Rect mCompoundRect = new Rect();
+		Drawable mDrawableTop, mDrawableBottom, mDrawableLeft, mDrawableRight;
+		int mDrawableSizeTop, mDrawableSizeBottom, mDrawableSizeLeft, mDrawableSizeRight;
+		int mDrawableWidthTop, mDrawableWidthBottom, mDrawableHeightLeft, mDrawableHeightRight;
+		int mDrawablePadding;
+	}
+	
+	private Context mContext;
+	private Drawables mDrawables;
+	private CharSequence mError;
+	private boolean mErrorWasChanged;
+	private ErrorPopup mPopup;
+	private boolean mShowErrorAfterAttach;
+	
+	public SetErrorHandler(Context context, View view) {
+		mContext = context;
+		mView = view;
+		setupCustomView();
+	}
+	
+	//necessary for XML inflation (of a View...this isn't a View class anymore)
+	/*
+	public SetErrorAble(Context context, AttributeSet attrs) {
+		super(context, attrs);
+		mContext = context;
+		setupCustomView();
+	}
+	*/
+	
+	private void setupCustomView() {
+		mTop = mView.getTop();
+		mBottom = mView.getBottom();
+		mLeft = mView.getLeft();
+		mRight = mView.getRight();
+		mPaddingTop = mView.getPaddingTop();
+		mPaddingBottom = mView.getPaddingBottom();
+		mPaddingLeft = mView.getPaddingLeft();
+		mPaddingRight = mView.getPaddingRight();
+	}
+	
+	//LD - custom
+	public void setErrorPopupPadding(int left, int top, int right, int bottom) {
+		mErrorPopupPaddingTop = top;
+		mErrorPopupPaddingBottom = bottom;
+		mErrorPopupPaddingLeft = left;
+		mErrorPopupPaddingRight = right;
+	}
+	
+	/**
+     * Sets the right-hand compound drawable of the TextView to the "error"
+     * icon and sets an error message that will be displayed in a popup when
+     * the TextView has focus.  The icon and error message will be reset to
+     * null when any key events cause changes to the TextView's text.  If the
+     * <code>error</code> is <code>null</code>, the error message and icon
+     * will be cleared.
+     */
+    public void setError(CharSequence error) {
+    	Log.d("SpinnerErrorable", ".setError(error)...");
+        if (error == null) {
+            setError(null, null);
+        } else {
+        	/*
+            Drawable dr = getContext().getResources().getDrawable(R.drawable.indicator_input_error);
+
+            dr.setBounds(0, 0, dr.getIntrinsicWidth(), dr.getIntrinsicHeight());
+            setError(error, dr);
+            */
+        	setError(error, null);
+        }
+    }
+	
+	public void setError(CharSequence error, Drawable icon) {
+		Log.d("SpinnerErrorable", ".setError(error, icon)...");
+		error = TextUtils.stringOrSpannedString(error);
+		
+		mError = error;
+		mErrorWasChanged = true;
+		final Drawables dr = mDrawables;
+		/*
+		if (dr != null) {
+			setCompoundDrawables(dr.mDrawableLeft, dr.mDrawableTop, icon, dr.mDrawableBottom);
+		} else {
+			setCompoundDrawables(null, null, icon, null);
+		}
+		*/
+		if (error == null) {
+			if (mPopup != null) {
+				if (mPopup.isShowing()) {
+					mPopup.dismiss();
+				}
+				mPopup = null;
+			}
+		} else {
+			//LD - EditTexts use isFocused to show only the focused one, other Views may not be focusable
+			//if (isFocused()) {
+				showError();
+			//}
+		}
+	}
+	
+	private void  showError() {
+		Log.d("SpinnerErrorable", ".showError()...");
+		if (mView.getWindowToken() == null) {
+			mShowErrorAfterAttach = true;
+			return;
+		}
+		
+		if (mPopup == null) {
+			LayoutInflater inflater = LayoutInflater.from(mView.getContext());
+			final TextView err = (TextView) inflater.inflate(R.layout.textview_hint, null);
+			err.setText(mError);
+			
+			mPopup = new ErrorPopup(err, 200, 50);
+			mPopup.setFocusable(false);
+			//LD - non EditTexts may not require this:
+			// The user is entering text, so the input method is needed.  We
+			// don't want the popup to be displayed on top of it.
+			mPopup.setInputMethodMode(PopupWindow.INPUT_METHOD_NEEDED);
+		}
+		
+		Log.d("SpinnerErrorable", "...error: "+mError);
+		TextView tv = (TextView) mPopup.getContentView();
+		tv.setPadding(mErrorPopupPaddingLeft, mErrorPopupPaddingTop, mErrorPopupPaddingRight, mErrorPopupPaddingBottom);
+		chooseSize(mPopup, mError, tv);
+		tv.setText(mError);
+		
+		mPopup.showAsDropDown(mView, getErrorX(), getErrorY());
+		mPopup.fixDirection(mPopup.isAboveAnchor());
+	}
+	
+	private void chooseSize(PopupWindow pop, CharSequence text, TextView tv) {
+        int wid = tv.getPaddingLeft() + tv.getPaddingRight();
+        int ht = tv.getPaddingTop() + tv.getPaddingBottom();
+
+        /*
+         * Figure out how big the text would be if we laid it out to the
+         * full width of this view minus the border.
+         */
+        int cap = mView.getWidth() - wid;
+        if (cap < 0) {
+            cap = 200; // We must not be measured yet -- setFrame() will fix it.
+        }
+
+        Layout l = new StaticLayout(text, tv.getPaint(), cap, Layout.Alignment.ALIGN_NORMAL, 1, 0, true);
+        float max = 0;
+        for (int i = 0; i < l.getLineCount(); i++) {
+            max = Math.max(max, l.getLineWidth(i));
+        }
+
+        /*
+         * Now set the popup size to be big enough for the text plus the border.
+         */
+        pop.setWidth(wid + (int) Math.ceil(max)+64);
+        pop.setHeight(ht + l.getHeight()+60);
+    }
+	
+	/**
+     * Returns the Y offset to make the pointy top of the error point
+     * at the middle of the error icon.
+     */
+    private int getErrorX() {
+        /*
+         * The "25" is the distance between the point and the right edge
+         * of the background
+         */
+
+        final Drawables dr = mDrawables;
+        return mView.getWidth() - mPopup.getWidth();// - getPaddingRight() - (dr != null ? dr.mDrawableSizeRight : 0) / 2 + 0;
+    }
+    
+    /**
+     * Returns the Y offset to make the pointy top of the error point
+     * at the bottom of the error icon.
+     */
+    private int getErrorY() {
+        /*
+         * Compound, not extended, because the icon is not clipped
+         * if the text height is smaller.
+         */
+        int vspace = mBottom - mTop -
+                     getCompoundPaddingBottom() - getCompoundPaddingTop();
+
+        final Drawables dr = mDrawables;
+        int icontop = getCompoundPaddingTop()
+                + (vspace - (dr != null ? dr.mDrawableHeightRight : 0)) / 2;
+
+        /*
+         * The "2" is the distance between the point and the top edge
+         * of the background.
+         */
+        //return icontop + (dr != null ? dr.mDrawableHeightRight : 0) - getHeight() - 2;
+        return 0 - mView.getHeight()/2;
+    }
+    
+    /**
+     * Returns the top padding of the view, plus space for the top
+     * Drawable if any.
+     */
+    public int getCompoundPaddingTop() {
+        final Drawables dr = mDrawables;
+        if (dr == null || dr.mDrawableTop == null) {
+            return mPaddingTop;
+        } else {
+            return mPaddingTop + dr.mDrawablePadding + dr.mDrawableSizeTop;
+        }
+    }
+
+    /**
+     * Returns the bottom padding of the view, plus space for the bottom
+     * Drawable if any.
+     */
+    public int getCompoundPaddingBottom() {
+        final Drawables dr = mDrawables;
+        if (dr == null || dr.mDrawableBottom == null) {
+            return mPaddingBottom;
+        } else {
+            return mPaddingBottom + dr.mDrawablePadding + dr.mDrawableSizeBottom;
+        }
+    }
+
+    /**
+     * Returns the left padding of the view, plus space for the left
+     * Drawable if any.
+     */
+    public int getCompoundPaddingLeft() {
+        final Drawables dr = mDrawables;
+        if (dr == null || dr.mDrawableLeft == null) {
+            return mPaddingLeft;
+        } else {
+            return mPaddingLeft + dr.mDrawablePadding + dr.mDrawableSizeLeft;
+        }
+    }
+
+    /**
+     * Returns the right padding of the view, plus space for the right
+     * Drawable if any.
+     */
+    public int getCompoundPaddingRight() {
+        final Drawables dr = mDrawables;
+        if (dr == null || dr.mDrawableRight == null) {
+            return mPaddingRight;
+        } else {
+            return mPaddingRight + dr.mDrawablePadding + dr.mDrawableSizeRight;
+        }
+    }
+	
+	/**
+     * Sets the Drawables (if any) to appear to the left of, above,
+     * to the right of, and below the text.  Use null if you do not
+     * want a Drawable there.  The Drawables must already have had
+     * {@link Drawable#setBounds} called.
+     *
+     * @attr ref android.R.styleable#TextView_drawableLeft
+     * @attr ref android.R.styleable#TextView_drawableTop
+     * @attr ref android.R.styleable#TextView_drawableRight
+     * @attr ref android.R.styleable#TextView_drawableBottom
+     */
+    public void setCompoundDrawables(Drawable left, Drawable top,
+                                     Drawable right, Drawable bottom) {
+        Drawables dr = mDrawables;
+
+        final boolean drawables = left != null || top != null
+                || right != null || bottom != null;
+
+        if (!drawables) {
+            // Clearing drawables...  can we free the data structure?
+            if (dr != null) {
+                if (dr.mDrawablePadding == 0) {
+                    mDrawables = null;
+                } else {
+                    // We need to retain the last set padding, so just clear
+                    // out all of the fields in the existing structure.
+                    dr.mDrawableLeft = null;
+                    dr.mDrawableTop = null;
+                    dr.mDrawableRight = null;
+                    dr.mDrawableBottom = null;
+                    dr.mDrawableSizeLeft = dr.mDrawableHeightLeft = 0;
+                    dr.mDrawableSizeRight = dr.mDrawableHeightRight = 0;
+                    dr.mDrawableSizeTop = dr.mDrawableWidthTop = 0;
+                    dr.mDrawableSizeBottom = dr.mDrawableWidthBottom = 0;
+                }
+            }
+        } else {
+            if (dr == null) {
+                mDrawables = dr = new Drawables();
+            }
+
+            dr.mDrawableLeft = left;
+            dr.mDrawableTop = top;
+            dr.mDrawableRight = right;
+            dr.mDrawableBottom = bottom;
+
+            final Rect compoundRect = dr.mCompoundRect;
+            int[] state = null;
+
+            state = mView.getDrawableState();
+
+            if (left != null) {
+                left.setState(state);
+                left.copyBounds(compoundRect);
+                dr.mDrawableSizeLeft = compoundRect.width();
+                dr.mDrawableHeightLeft = compoundRect.height();
+            } else {
+                dr.mDrawableSizeLeft = dr.mDrawableHeightLeft = 0;
+            }
+
+            if (right != null) {
+                right.setState(state);
+                right.copyBounds(compoundRect);
+                dr.mDrawableSizeRight = compoundRect.width();
+                dr.mDrawableHeightRight = compoundRect.height();
+            } else {
+                dr.mDrawableSizeRight = dr.mDrawableHeightRight = 0;
+            }
+
+            if (top != null) {
+                top.setState(state);
+                top.copyBounds(compoundRect);
+                dr.mDrawableSizeTop = compoundRect.height();
+                dr.mDrawableWidthTop = compoundRect.width();
+            } else {
+                dr.mDrawableSizeTop = dr.mDrawableWidthTop = 0;
+            }
+
+            if (bottom != null) {
+                bottom.setState(state);
+                bottom.copyBounds(compoundRect);
+                dr.mDrawableSizeBottom = compoundRect.height();
+                dr.mDrawableWidthBottom = compoundRect.width();
+            } else {
+                dr.mDrawableSizeBottom = dr.mDrawableWidthBottom = 0;
+            }
+        }
+
+        mView.invalidate();
+        mView.requestLayout();
+    }
+	
+	/*
+	 * INNER CLASSES
+	 */
+	
+	/**
+	 * Ripped from android.Widget.TextView.
+	 * Modified to utilise end-developer-App's local resources.
+	 *
+	 */
+	private static class  ErrorPopup extends PopupWindow {
+		private boolean mAbove = false;
+		private TextView mView;
+		
+		ErrorPopup(TextView v, int width, int height) {
+			super(v, width, height);
+			mView = v;
+		}
+		
+		void  fixDirection(boolean above) {
+			mAbove = above;
+			
+			if(above) {
+				mView.setBackgroundResource(R.drawable.popup_inline_error_above);
+			} else {
+				mView.setBackgroundResource(R.drawable.popup_inline_error);
+			}
+		}
+		
+		@Override
+		public void update(int x, int y, int w, int h, boolean force) {
+			super.update(x, y, w, h, force);
+			
+			boolean above = isAboveAnchor();
+			if(above != mAbove) {
+				fixDirection(above);
+			}
+		}
+	}
+}

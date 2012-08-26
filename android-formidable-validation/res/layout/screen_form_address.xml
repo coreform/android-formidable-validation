@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical" android:gravity="center_horizontal">
+
+    <TextView
+        android:id="@+id/headerTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:text="FormIdableValidation"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:textColor="#FF6600"
+        android:textStyle="bold" style="@style/ScreenTitle"/>
+
+    <TextView
+        android:id="@+id/subHeaderTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="36dp"
+        android:text="Example #1: Address Form" style="@style/ScreenSubTitle"/>
+
+    <ScrollView
+        android:id="@+id/contentScrollView"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content" android:padding="24dp">
+
+        <LinearLayout
+            android:id="@+id/contentLinearLayout"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:orientation="vertical" >
+
+            <TextView
+                android:id="@+id/field01LabelTextView"
+                style="@style/FormFieldLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Address Line 1" />
+
+            <EditText
+                android:id="@+id/field01EditText"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textNoSuggestions|textPostalAddress" >
+
+                <requestFocus />
+            </EditText>
+
+            <TextView
+                android:id="@+id/field02LabelTextView"
+                style="@style/FormFieldLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Address Line 2" />
+
+            <EditText
+                android:id="@+id/field02EditText"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:inputType="textNoSuggestions|textPostalAddress" />
+
+            <TextView
+                android:id="@+id/field03LabelTextView"
+                style="@style/FormFieldLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Address Suburb/Town/City" />
+
+            <EditText
+                android:id="@+id/field03EditText"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:inputType="textNoSuggestions|textPostalAddress" />
+
+            <TextView
+                android:id="@+id/field04LabelTextView"
+                style="@style/FormFieldLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="State/Province/Territory" />
+
+            <EditText
+                android:id="@+id/field04EditText"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:inputType="textNoSuggestions|textPostalAddress" />
+
+            <TextView
+                android:id="@+id/field05LabelTextView"
+                style="@style/FormFieldLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Country" />
+
+            <com.coreform.open.android.formidablevalidation.SetErrorAbleSpinner
+                android:id="@+id/field05Spinner"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1" />
+
+            <TextView
+                android:id="@+id/field06LabelTextView"
+                style="@style/FormFieldLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Phone number" />
+
+            <EditText
+                android:id="@+id/field06EditText"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:inputType="textNoSuggestions|phone" />
+
+            <TextView
+                android:id="@+id/field07LabelTextView"
+                style="@style/FormFieldLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Email address" />
+
+            <EditText
+                android:id="@+id/field07EditText"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:inputType="textNoSuggestions|textEmailAddress" />
+
+            <CheckBox
+                android:id="@+id/field08CheckBox"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="signup to newsletter list?" />
+
+            <TextView
+                android:id="@+id/field09LabelTextView"
+                style="@style/FormFieldLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Favourite colour" />
+
+            <Button
+                android:id="@+id/field09Button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="select" />
+
+            <LinearLayout
+                android:id="@+id/footerLinearLayout"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1" >
+
+                <Button
+                    android:id="@+id/clearFormButton"
+                    style="@style/FormFooterButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0.3"
+                    android:text="Clear" />
+
+                <Button
+                    android:id="@+id/validateFormButton"
+                    style="@style/FormFooterButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0.7"
+                    android:text="Validate" />
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </ScrollView>
+
+</LinearLayout>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<style name="ScreenTitle" parent="@android:style/Widget.TextView">
+		<item name="android:textSize">32sp</item>
+ 	</style>
+	<style name="ScreenSubTitle" parent="@android:style/Widget.TextView">
+		<item name="android:textSize">18sp</item>
+ 	</style>
+	<style name="FormFieldLabel" parent="@android:style/Widget.TextView">
+		<item name="android:textSize">20sp</item>
+ 	</style>
+ 	<style name="FormFooterButton" parent="@android:style/Widget.Button">
+		<item name="android:textSize">20sp</item>
+ 	</style>
+</resources>

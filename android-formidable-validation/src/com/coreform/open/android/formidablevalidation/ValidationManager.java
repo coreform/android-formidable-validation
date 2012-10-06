@@ -2,16 +2,14 @@ package com.coreform.open.android.formidablevalidation;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
 import android.text.SpannableStringBuilder;
 import android.util.Log;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -20,12 +18,12 @@ public class ValidationManager {
 	private static final boolean DEBUG = true;
 	private static final String TAG = "ValidationManager";
 	
-	private HashMap<String, List<ValueValidatorInterface>> valueValidatorMap;
-	private HashMap<String, List<DependencyValidatorInterface>> dependencyValidatorMap;
+	private LinkedHashMap<String, List<ValueValidatorInterface>> valueValidatorMap;
+	private LinkedHashMap<String, List<DependencyValidatorInterface>> dependencyValidatorMap;
 	
 	public ValidationManager() {
-		valueValidatorMap = new HashMap<String, List<ValueValidatorInterface>>();
-		dependencyValidatorMap = new HashMap<String, List<DependencyValidatorInterface>>();
+		valueValidatorMap = new LinkedHashMap<String, List<ValueValidatorInterface>>();
+		dependencyValidatorMap = new LinkedHashMap<String, List<DependencyValidatorInterface>>();
 	}
 	
 	/*
@@ -213,7 +211,7 @@ public class ValidationManager {
 				if(!aFieldValueValidationResultsList.isEmpty()) {
 					fieldSource = aFieldValueValidationResultsList.get(0).getSource();
 				} else {
-					if(DEBUG) Log.d(TAG, "...field has no source! (no DependencyValidators and no ValieValidators)...");
+					if(DEBUG) Log.d(TAG, "...field has no source! (no DependencyValidators and no ValueValidators)...");
 				}
 			}
 			//create and add the FinalValidationResult for this field to the finalValidationResultMap ONLY if a value/dependency fail occurred
@@ -253,6 +251,7 @@ public class ValidationManager {
 						//setError
 						SpannableStringBuilder errorText = new SpannableStringBuilder(aFinalValidationResult.getDependencyInvalidMessage());
 						((EditText) aFinalValidationResult.getSource()).setError(errorText);
+						//break validationLoop;
 					}
 				}
 				if(!aFinalValidationResult.isValueValid()) {
@@ -260,20 +259,19 @@ public class ValidationManager {
 					if(DEBUG) Log.d(TAG, "...value validation failed, with message: "+aFinalValidationResult.getValueInvalidMessage());
 					//only display value invalid message if dependency(ies) satisfied for this field
 					if(!invalidDependencyTakesPrecedence) {
-						/*if(aFinalValidationResult.getSource() instanceof TextView) {*/
 						if(aFinalValidationResult.getSource() == null) {
 							if(DEBUG) Log.d(TAG, "...cannot display error balloon because source is null!");
 							//do nothing
-						} else if(aFinalValidationResult.getSource().getClass().isAssignableFrom(TextView.class)) {
+						} else if(aFinalValidationResult.getSource() instanceof TextView) {
 							//autoscroll to field
-							if(!invalidFieldHasAlreadyBeenFocused) {
+							if(true || !invalidFieldHasAlreadyBeenFocused) {
 								((EditText) aFinalValidationResult.getSource()).requestFocus();
 								invalidFieldHasAlreadyBeenFocused = true;
 							}
 							//setError
 							SpannableStringBuilder errorText = new SpannableStringBuilder(aFinalValidationResult.getValueInvalidMessage());
 							((EditText) aFinalValidationResult.getSource()).setError(errorText);
-						/*} else if("Button".equals(aFinalValidationResult.getSource().getClass().getSimpleName())) {*/
+							//return false;	//break now to block a subsequent EditText or SetErrorAble-View from showing another ErrorPopup
 						} else if(aFinalValidationResult.getSource() instanceof SetErrorAble) {
 							//note: this is seriously custom code, specific for this use-case, not very portable to other use-cases in its current form
 							if(DEBUG) Log.d(TAG, "...attempting to display custom error balloon...");
@@ -282,13 +280,14 @@ public class ValidationManager {
 								//((Button) aFinalValidationResult.getSource()).requestFocus();	//Button.requestFocus does nada
 								invalidFieldHasAlreadyBeenFocused = true;
 								if(containerScrollView != null) {
-									//forcibly scroll the scrollView coz Button.requestFocus does jack-all
+									//forcibly scroll the scrollView as most non-EditText form Views won't receive focus
 									containerScrollView.scrollTo(0, 0);	//hardcoded scroll to top of form! TODO: make this scroll to dynamic position of invalid Button
 								}
 							}
 							//setError (for a button, this won't requestFocus() and won't show the message in a popup...it only sets the exclamation inner drawable)
 							SpannableStringBuilder errorText = new SpannableStringBuilder(aFinalValidationResult.getValueInvalidMessage());
-							((Button) aFinalValidationResult.getSource()).setError(errorText);
+							((SetErrorAble) aFinalValidationResult.getSource()).setError(errorText);
+							//return false;	//break now to block a subsequent ErrorText stealing focus (and thereby showing more than 1x ErrorPopup)
 							//manually set the rest of error
 							/*
 							if(mCustomErrorBalloon == null) {

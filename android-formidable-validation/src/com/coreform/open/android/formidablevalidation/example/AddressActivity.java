@@ -8,6 +8,7 @@ import com.coreform.open.android.formidablevalidation.FinalValidationResult;
 import com.coreform.open.android.formidablevalidation.R;
 import com.coreform.open.android.formidablevalidation.RegExpressionValueValidator;
 import com.coreform.open.android.formidablevalidation.SetErrorAbleSpinner;
+import com.coreform.open.android.formidablevalidation.SpinnerRequiredValueValidator;
 import com.coreform.open.android.formidablevalidation.ValidationManager;
 
 import android.app.Activity;
@@ -80,7 +81,11 @@ public class AddressActivity extends Activity {
     	//setup validation
     	mValidationManager = new ValidationManager();
     	
+    	mValidationManager.add("addressLine1");
+    	mValidationManager.add("addressLine1", new RegExpressionValueValidator(mAddressLine1EditText, "^[a-zA-Z]{3}$", "please enter your address."));
     	mValidationManager.add("signupNewsletter");
+    	mValidationManager.add("countrySpinner");
+    	mValidationManager.add("countrySpinner", new SpinnerRequiredValueValidator(mCountrySpinner, "please select your country (haha you can't)."));
     	mValidationManager.add("emailAddress");
     	mValidationManager.add("emailAddress", new CheckBoxCheckedDependencyValidator(mEmailEditText, "signupNewsletter", mSignupNewsletterCheckBox, true, false, "Please enter your email address to signup to the newsletter list."));
     	mValidationManager.add("emailAddress", new RegExpressionValueValidator(mEmailEditText, "^([0-9a-zA-Z]([-\\.\\w]*[0-9a-zA-Z])*@([0-9a-zA-Z][-\\w]*[0-9a-zA-Z]\\.)+[a-zA-Z]{2,9})$", "Email address must be valid."));

@@ -23,6 +23,8 @@ public class HomeActivity extends Activity {
         //set OnClickListeners
         example1Button.setOnClickListener(new ExampleButtonOnClickListener(1));
         example2Button.setOnClickListener(new ExampleButtonOnClickListener(2));
+        
+        example2Button.setVisibility(View.GONE);	//hide until the example is working
     }
     
     /*

@@ -1,6 +1,7 @@
 package com.coreform.open.android.formidablevalidation;
 
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.text.Layout;
@@ -12,8 +13,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.PopupWindow;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class SetErrorHandler {
+	private static final boolean DEBUG = true;
+	private static final String TAG = "SetErrorHandler";
+	
 	private View mView;
 	private int mTop;
 	private int mBottom;
@@ -69,7 +74,7 @@ public class SetErrorHandler {
 		mPaddingRight = mView.getPaddingRight();
 	}
 	
-	//LD - custom
+	//LD - custom..TODO: remove this
 	public void setErrorPopupPadding(int left, int top, int right, int bottom) {
 		mErrorPopupPaddingTop = top;
 		mErrorPopupPaddingBottom = bottom;
@@ -86,7 +91,7 @@ public class SetErrorHandler {
      * will be cleared.
      */
     public void setError(CharSequence error) {
-    	Log.d("SpinnerErrorable", ".setError(error)...");
+    	if(DEBUG) Log.d(TAG, ".setError(error)...");
         if (error == null) {
             setError(null, null);
         } else {
@@ -101,13 +106,14 @@ public class SetErrorHandler {
     }
 	
 	public void setError(CharSequence error, Drawable icon) {
-		Log.d("SpinnerErrorable", ".setError(error, icon)...");
+		if(DEBUG) Log.d(TAG, ".setError(error, icon)...");
 		error = TextUtils.stringOrSpannedString(error);
 		
 		mError = error;
 		mErrorWasChanged = true;
-		final Drawables dr = mDrawables;
 		/*
+		//not even attempting to show compound/side drawables for SetErrorAble Views, for now.
+		final Drawables dr = mDrawables;
 		if (dr != null) {
 			setCompoundDrawables(dr.mDrawableLeft, dr.mDrawableTop, icon, dr.mDrawableBottom);
 		} else {
@@ -130,7 +136,7 @@ public class SetErrorHandler {
 	}
 	
 	private void  showError() {
-		Log.d("SpinnerErrorable", ".showError()...");
+		if(DEBUG) Log.d(TAG, ".showError()...");
 		if (mView.getWindowToken() == null) {
 			mShowErrorAfterAttach = true;
 			return;
@@ -141,7 +147,8 @@ public class SetErrorHandler {
 			final TextView err = (TextView) inflater.inflate(R.layout.textview_hint, null);
 			err.setText(mError);
 			
-			mPopup = new ErrorPopup(err, 200, 50);
+			final float scale = mContext.getResources().getDisplayMetrics().density;
+			mPopup = new ErrorPopup(mContext, err, (int) (200 * scale + 0.5f), (int) (50 * scale + 0.5f));
 			mPopup.setFocusable(false);
 			//LD - non EditTexts may not require this:
 			// The user is entering text, so the input method is needed.  We
@@ -149,9 +156,9 @@ public class SetErrorHandler {
 			mPopup.setInputMethodMode(PopupWindow.INPUT_METHOD_NEEDED);
 		}
 		
-		Log.d("SpinnerErrorable", "...error: "+mError);
+		if(DEBUG) Log.d(TAG, "...error: "+mError);
 		TextView tv = (TextView) mPopup.getContentView();
-		tv.setPadding(mErrorPopupPaddingLeft, mErrorPopupPaddingTop, mErrorPopupPaddingRight, mErrorPopupPaddingBottom);
+		//tv.setPadding(mErrorPopupPaddingLeft, mErrorPopupPaddingTop, mErrorPopupPaddingRight, mErrorPopupPaddingBottom);
 		chooseSize(mPopup, mError, tv);
 		tv.setText(mError);
 		
@@ -163,26 +170,22 @@ public class SetErrorHandler {
         int wid = tv.getPaddingLeft() + tv.getPaddingRight();
         int ht = tv.getPaddingTop() + tv.getPaddingBottom();
 
-        /*
-         * Figure out how big the text would be if we laid it out to the
-         * full width of this view minus the border.
-         */
-        int cap = mView.getWidth() - wid;
-        if (cap < 0) {
-            cap = 200; // We must not be measured yet -- setFrame() will fix it.
-        }
-
-        Layout l = new StaticLayout(text, tv.getPaint(), cap, Layout.Alignment.ALIGN_NORMAL, 1, 0, true);
+        //com.android.internal.R.dimen.textview_error_popup_default_width introduced after Gingerbread, only has one variant (240dip)
+        int defaultWidthInPixels = mContext.getResources().getDimensionPixelSize(R.dimen.textview_error_popup_default_width);
+        Layout l = new StaticLayout(text, tv.getPaint(), defaultWidthInPixels, Layout.Alignment.ALIGN_NORMAL, 1, 0, true);
+        
         float max = 0;
         for (int i = 0; i < l.getLineCount(); i++) {
             max = Math.max(max, l.getLineWidth(i));
         }
+        
+        if(DEBUG) Log.d(TAG, "max: "+max+", height: "+l.getHeight());
 
         /*
          * Now set the popup size to be big enough for the text plus the border.
          */
-        pop.setWidth(wid + (int) Math.ceil(max)+64);
-        pop.setHeight(ht + l.getHeight()+60);
+        pop.setWidth(wid + (int) Math.ceil(max));
+        pop.setHeight(ht + l.getHeight());	//TODO: buggy (the 2 shouldnt need to be there)
     }
 	
 	/**
@@ -379,19 +382,32 @@ public class SetErrorHandler {
 	private static class  ErrorPopup extends PopupWindow {
 		private boolean mAbove = false;
 		private TextView mView;
+		private int mPopupInlineErrorBackgroundId = 0;
+        private int mPopupInlineErrorAboveBackgroundId = 0;
 		
-		ErrorPopup(TextView v, int width, int height) {
+		ErrorPopup(Context mContext, TextView v, int width, int height) {
 			super(v, width, height);
 			mView = v;
+			// Make sure the TextView has a background set as it will be used the first time it is
+            // shown and positioned. Initialised with below background, which should have
+            // dimensions identical to the above version for this to work (and is more likely).
+			//following is a tweak on the ICS take...
+			TypedArray array = mContext.obtainStyledAttributes(R.styleable.Theme);
+            mPopupInlineErrorBackgroundId = array.getResourceId(R.styleable.Theme_errorMessageBackground, 0);
+            mPopupInlineErrorAboveBackgroundId = array.getResourceId(R.styleable.Theme_errorMessageAboveBackground, 0);
+            //if(DEBUG) Log.d(TAG, "popupInlineErrorBackgroundId: "+mPopupInlineErrorBackgroundId);
+            //if(DEBUG) Log.d(TAG, "popupInlineErrorAboveBackgroundId: "+mPopupInlineErrorAboveBackgroundId);
+            mView.setBackgroundResource(mPopupInlineErrorBackgroundId);
+
 		}
 		
 		void  fixDirection(boolean above) {
 			mAbove = above;
 			
 			if(above) {
-				mView.setBackgroundResource(R.drawable.popup_inline_error_above);
+				mView.setBackgroundResource(mPopupInlineErrorAboveBackgroundId);
 			} else {
-				mView.setBackgroundResource(R.drawable.popup_inline_error);
+				mView.setBackgroundResource(mPopupInlineErrorBackgroundId);
 			}
 		}
 		

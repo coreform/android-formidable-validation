@@ -8,8 +8,14 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import android.content.Context;
+import android.os.Build;
+import android.os.Handler;
+import android.support.v4.view.accessibility.AccessibilityEventCompat;
 import android.text.SpannableStringBuilder;
 import android.util.Log;
+import android.view.accessibility.AccessibilityEvent;
+import android.view.accessibility.AccessibilityManager;
 import android.widget.EditText;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -18,12 +24,29 @@ public class ValidationManager {
 	private static final boolean DEBUG = true;
 	private static final String TAG = "ValidationManager";
 	
+	private static final long ACCESSIBILITY_ANNOUNCE_DELAY = 1 * 1000;
+	
+	private static Context mContext;
+	private Handler mHandler;
+	
+	/**
+     * The accessibility manager for this context. This is used to check the
+     * accessibility enabled state, as well as to send raw accessibility events.
+     */
+    private static AccessibilityManager mAccessibilityManager;
+	
 	private LinkedHashMap<String, List<ValueValidatorInterface>> valueValidatorMap;
 	private LinkedHashMap<String, List<DependencyValidatorInterface>> dependencyValidatorMap;
 	
-	public ValidationManager() {
+	public ValidationManager(Context context) {
+		mContext = context;
 		valueValidatorMap = new LinkedHashMap<String, List<ValueValidatorInterface>>();
 		dependencyValidatorMap = new LinkedHashMap<String, List<DependencyValidatorInterface>>();
+		
+		mHandler = new Handler();
+		
+		// Keep a handle to the accessibility manager.
+    	mAccessibilityManager = (AccessibilityManager) mContext.getSystemService(Context.ACCESSIBILITY_SERVICE);
 	}
 	
 	/*
@@ -245,12 +268,15 @@ public class ValidationManager {
 					if("EditText".equals(aFinalValidationResult.getSource().getClass().getSimpleName())) {
 						//autoscroll to field
 						if(!invalidFieldHasAlreadyBeenFocused) {
-							((EditText) aFinalValidationResult.getSource()).requestFocus();	//problematic for onFocusChangeListener (yields 2x focused EditTexts = BAD STUFF)
+							//((EditText) aFinalValidationResult.getSource()).requestFocus();	//problematic for onFocusChangeListener (yields 2x focused EditTexts = BAD STUFF)
 							invalidFieldHasAlreadyBeenFocused = true;
 						}
 						//setError
 						SpannableStringBuilder errorText = new SpannableStringBuilder(aFinalValidationResult.getDependencyInvalidMessage());
 						((EditText) aFinalValidationResult.getSource()).setError(errorText);
+						//need to delay accessibility announcement so its the last View to steal focus
+						AnnounceForAccessibilityRunnable announceForAccessibilityRunnable = new AnnounceForAccessibilityRunnable(errorText);
+						mHandler.postDelayed(announceForAccessibilityRunnable, ACCESSIBILITY_ANNOUNCE_DELAY);
 						//break validationLoop;
 					}
 				}
@@ -271,6 +297,9 @@ public class ValidationManager {
 							//setError
 							SpannableStringBuilder errorText = new SpannableStringBuilder(aFinalValidationResult.getValueInvalidMessage());
 							((EditText) aFinalValidationResult.getSource()).setError(errorText);
+							//need to delay accessibility announcement so its the last View to steal focus
+							AnnounceForAccessibilityRunnable announceForAccessibilityRunnable = new AnnounceForAccessibilityRunnable(errorText);
+							mHandler.postDelayed(announceForAccessibilityRunnable, ACCESSIBILITY_ANNOUNCE_DELAY);
 							//return false;	//break now to block a subsequent EditText or SetErrorAble-View from showing another ErrorPopup
 						} else if(aFinalValidationResult.getSource() instanceof SetErrorAble) {
 							//note: this is seriously custom code, specific for this use-case, not very portable to other use-cases in its current form
@@ -287,6 +316,9 @@ public class ValidationManager {
 							//setError (for a button, this won't requestFocus() and won't show the message in a popup...it only sets the exclamation inner drawable)
 							SpannableStringBuilder errorText = new SpannableStringBuilder(aFinalValidationResult.getValueInvalidMessage());
 							((SetErrorAble) aFinalValidationResult.getSource()).setError(errorText);
+							//need to delay accessibility announcement so its the last View to steal focus
+							AnnounceForAccessibilityRunnable announceForAccessibilityRunnable = new AnnounceForAccessibilityRunnable(errorText);
+							mHandler.postDelayed(announceForAccessibilityRunnable, ACCESSIBILITY_ANNOUNCE_DELAY);
 							//return false;	//break now to block a subsequent ErrorText stealing focus (and thereby showing more than 1x ErrorPopup)
 							//manually set the rest of error
 							/*
@@ -313,4 +345,61 @@ public class ValidationManager {
 			return false;
 		}
 	}
+	
+	/**
+     * Generates and dispatches an SDK-specific spoken announcement.
+     * <p>
+     * For backwards compatibility, we're constructing an event from scratch
+     * using the appropriate event type. If your application only targets SDK
+     * 16+, you can just call View.announceForAccessibility(CharSequence).
+     * </p>
+     * 
+     * Adapted from https://http://eyes-free.googlecode.com/files/accessibility_codelab_demos_v2_src.zip
+     *
+     * @param text The text to announce.
+     */
+    public static void announceForAccessibilityCompat(CharSequence text) {
+        if (!mAccessibilityManager.isEnabled()) {
+            return;
+        }
+
+        // Prior to SDK 16, announcements could only be made through FOCUSED
+        // events. Jelly Bean (SDK 16) added support for speaking text verbatim
+        // using the ANNOUNCEMENT event type.
+        final int eventType;
+        if (Build.VERSION.SDK_INT < 16) {
+            eventType = AccessibilityEvent.TYPE_VIEW_FOCUSED;
+        } else {
+            eventType = AccessibilityEventCompat.TYPE_ANNOUNCEMENT;
+        }
+
+        // Construct an accessibility event with the minimum recommended
+        // attributes. An event without a class name or package may be dropped.
+        final AccessibilityEvent event = AccessibilityEvent.obtain(eventType);
+        event.getText().add(text);
+        event.setClassName(SetErrorHandler.class.getName());
+        event.setPackageName(mContext.getPackageName());
+
+        // Sends the event directly through the accessibility manager. If your
+        // application only targets SDK 14+, you should just call
+        // getParent().requestSendAccessibilityEvent(this, event);
+        mAccessibilityManager.sendAccessibilityEvent(event);
+    }
+    
+    /*
+     * INNER CLASSES
+     */
+    
+    private static class AnnounceForAccessibilityRunnable implements Runnable {
+    	private final CharSequence mText;
+    	
+    	public AnnounceForAccessibilityRunnable(CharSequence text) {
+    		mText = text;
+    	}
+		@Override
+		public void run() {
+			announceForAccessibilityCompat(mText);
+		}
+    	
+    }
 }

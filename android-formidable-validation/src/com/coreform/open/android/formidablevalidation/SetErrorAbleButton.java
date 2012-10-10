@@ -2,6 +2,7 @@ package com.coreform.open.android.formidablevalidation;
 
 
 import android.content.Context;
+import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.widget.Button;
 
@@ -33,5 +34,4 @@ public class SetErrorAbleButton extends Button implements SetErrorAble {
 		// TODO Auto-generated method stub
 		
 	}
-
 }

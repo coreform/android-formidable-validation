@@ -79,7 +79,7 @@ public class AddressActivity extends Activity {
     	mCountrySpinner.setErrorPopupPadding(12, 12, 12, 12);
     	
     	//setup validation
-    	mValidationManager = new ValidationManager();
+    	mValidationManager = new ValidationManager(this);
     	
     	mValidationManager.add("addressLine1");
     	mValidationManager.add("addressLine1", new RegExpressionValueValidator(mAddressLine1EditText, "^[a-zA-Z]{3}$", "please enter your address."));

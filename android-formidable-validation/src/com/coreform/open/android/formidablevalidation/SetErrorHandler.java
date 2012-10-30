@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2006 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.coreform.open.android.formidablevalidation;
 
 import android.content.Context;
@@ -48,7 +64,7 @@ public class SetErrorHandler {
 	
 	private Context mContext;
 	private Drawables mDrawables;
-	private CharSequence mError;
+	public CharSequence mError;
 	private boolean mErrorWasChanged;
 	private ErrorPopup mPopup;
 	private boolean mShowErrorAfterAttach;
@@ -98,7 +114,7 @@ public class SetErrorHandler {
     public void setError(CharSequence error) {
     	if(DEBUG) Log.d(TAG, ".setError(error)...");
         if (error == null) {
-            setError(null, null);
+            setError(null, null, true, true);
         } else {
         	/*
             Drawable dr = getContext().getResources().getDrawable(R.drawable.indicator_input_error);
@@ -106,33 +122,59 @@ public class SetErrorHandler {
             dr.setBounds(0, 0, dr.getIntrinsicWidth(), dr.getIntrinsicHeight());
             setError(error, dr);
             */
-        	setError(error, null);
+        	setError(error, null, true, true);
         }
     }
 	
-	public void setError(CharSequence error, Drawable icon) {
-		if(DEBUG) Log.d(TAG, ".setError(error, icon)...");
+    public void setError(CharSequence error, boolean showError) {
+    	setError(error, null, showError, true);
+    }
+    
+    public void setError(CharSequence error, Drawable icon) {
+    	setError(error, icon, true, true);
+    }
+    
+    public void setError(CharSequence error, Drawable icon, boolean showError) {
+    	setError(error, icon, showError, true);
+    }
+    
+	public void setError(CharSequence error, Drawable icon, boolean showError, boolean showCompoundDrawableOnRight) {
+		if(DEBUG) Log.d(TAG, ".setError(error, icon, showError, showCompoundDrawableOnRight)...");
+		if(icon != null) {
+			if(DEBUG) Log.d(TAG, "...icon is not null...");
+			icon.setBounds(0, 0, icon.getIntrinsicWidth(), icon.getIntrinsicHeight());
+		}
 		error = TextUtils.stringOrSpannedString(error);
+		mErrorWasChanged = true;
 		
 		mError = error;
 		mErrorWasChanged = true;
-		/*
-		//not even attempting to show compound/side drawables for SetErrorAble Views, for now.
+
 		final Drawables dr = mDrawables;
-		if (dr != null) {
-			setCompoundDrawables(dr.mDrawableLeft, dr.mDrawableTop, icon, dr.mDrawableBottom);
-		} else {
-			setCompoundDrawables(null, null, icon, null);
+		if(mView instanceof TextView && error != null) {
+			if (true || dr != null) {
+	            if(showCompoundDrawableOnRight) {
+	            	if(DEBUG) Log.d(TAG, "...showing CompoundDrawable on right)...");
+	            	//((TextView) mView).setCompoundDrawables(dr.mDrawableLeft, dr.mDrawableTop, icon, dr.mDrawableBottom);
+	            	((TextView) mView).setCompoundDrawables(null, null, icon, null);
+	            } else {
+	            	//((TextView) mView).setCompoundDrawables(icon, dr.mDrawableTop, dr.mDrawableRight, dr.mDrawableBottom);
+	            	((TextView) mView).setCompoundDrawables(icon, null, null, null);
+	            }
+	        }
 		}
-		*/
+		
 		if (error == null) {
 			if (mPopup != null) {
 				if (mPopup.isShowing()) {
 					mPopup.dismiss();
 				}
+				if(mView instanceof TextView) {
+					((TextView) mView).setCompoundDrawables(null, null, null, null);
+				}
 				mPopup = null;
 			}
-		} else {
+		} else if(showError) {
 			//LD - EditTexts use isFocused to show only the focused one, other Views may not be focusable
 			//if (isFocused()) {
 				showError();
@@ -140,7 +182,7 @@ public class SetErrorHandler {
 		}
 	}
 	
-	private void  showError() {
+	public void  showError() {
 		if(DEBUG) Log.d(TAG, ".showError()...");
 		if (mView.getWindowToken() == null) {
 			mShowErrorAfterAttach = true;
@@ -170,6 +212,16 @@ public class SetErrorHandler {
 		mPopup.showAsDropDown(mView, getErrorX(), getErrorY());
 		mPopup.fixDirection(mPopup.isAboveAnchor());
 	}
+	
+	public void hideError() {
+        if (mPopup != null) {
+            if (mPopup.isShowing()) {
+            	mPopup.dismiss();
+            }
+        }
+
+        mShowErrorAfterAttach = false;
+    }
 	
 	private void chooseSize(PopupWindow pop, CharSequence text, TextView tv) {
         int wid = tv.getPaddingLeft() + tv.getPaddingRight();
@@ -373,6 +425,27 @@ public class SetErrorHandler {
 
         mView.invalidate();
         mView.requestLayout();
+    }
+    
+    public void hideErrorIfUnchanged() {
+        if (mError != null && !mErrorWasChanged) {
+            setError(null, null);
+        }
+    }
+    
+    /**
+     * Resets the mErrorWasChanged flag, so that future calls to {@link #setError(CharSequence)}
+     * can be recorded.
+     * @hide
+     */
+    public void resetErrorChangedFlag() {
+        /*
+         * Keep track of what the error was before doing the input
+         * so that if an input filter changed the error, we leave
+         * that error showing.  Otherwise, we take down whatever
+         * error was showing when the user types something.
+         */
+        mErrorWasChanged = false;
     }
     
 	/*

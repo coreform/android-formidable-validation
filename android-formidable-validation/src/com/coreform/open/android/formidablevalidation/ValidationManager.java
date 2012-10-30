@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2006 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.coreform.open.android.formidablevalidation;
 
 import java.util.ArrayList;
@@ -14,8 +30,10 @@ import android.os.Handler;
 import android.support.v4.view.accessibility.AccessibilityEventCompat;
 import android.text.SpannableStringBuilder;
 import android.util.Log;
+import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityManager;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -124,9 +142,9 @@ public class ValidationManager {
 					if(DEBUG) Log.d(TAG, "......value validation expression: "+valueValidatorInterface.getExpression());
 					ValueValidationResult aValueValidationResult = valueValidatorInterface.validateValue();
 					//only add a FinalValidationResult if ValueValidationResult is invalid WHETHER OR NOT we care if its invalid
-					if(!aValueValidationResult.isValid()) fieldValueValidationResultsList.add(aValueValidationResult);
-					if(DEBUG && !aValueValidationResult.isValid()) Log.d(TAG, ".........a ValueValidationResult is INVALID...");
-					if(DEBUG && aValueValidationResult.isValid()) Log.d(TAG, ".........a ValueValidationResult is VALID...");
+					if(!aValueValidationResult.isValid()) { fieldValueValidationResultsList.add(aValueValidationResult); }
+					if(DEBUG && !aValueValidationResult.isValid()) { Log.d(TAG, ".........a ValueValidationResult is INVALID..."); }
+					if(DEBUG && aValueValidationResult.isValid()) { Log.d(TAG, ".........a ValueValidationResult is VALID..."); }
 				}
 				//add ResultsList to ResultsMap for this field
 				valueValidationResultsMap.put(entry.getKey(), fieldValueValidationResultsList);
@@ -164,9 +182,9 @@ public class ValidationManager {
 					//null check is a bit of a quick hack to alleviate a bigger problem...which it doesn't fix...TODO fix the actual problem!
 					//NullPointerException when accessing FinalValidationResult.getSource() in submit button's onClickListener WHEN nameFirst is invalid (so its due to the dependency check logic)
 					if(!aDependencyValidationResult.isValid()) fieldCruxValidationResultsList.add(aDependencyValidationResult);
-					if(DEBUG && !aDependencyValidationResult.isValid()) Log.d(TAG, ".........a DependencyValidationResult is INVALID...");
-					if(DEBUG && aDependencyValidationResult.isValid()) Log.d(TAG, ".........a DependencyValidationResult is VALID...");
-					if(DEBUG && dependencyValidatorInterface.getSource() == null) Log.d(TAG, ".........a DependencyValidator's source is NULL...");
+					if(DEBUG && !aDependencyValidationResult.isValid()) { Log.d(TAG, ".........a DependencyValidationResult is INVALID..."); }
+					if(DEBUG && aDependencyValidationResult.isValid()) { Log.d(TAG, ".........a DependencyValidationResult is VALID..."); }
+					if(DEBUG && dependencyValidatorInterface.getSource() == null) { Log.d(TAG, ".........a DependencyValidator's source is NULL..."); }
 				}
 				//add ResultsList to ResultsMap for this field
 				dependencyValidationResultsMap.put(entry.getKey(), fieldCruxValidationResultsList);
@@ -175,13 +193,43 @@ public class ValidationManager {
 		return dependencyValidationResultsMap;
 	}
 	
+	private void removePreviouslySetErrors() {
+		for(Entry<String, List<ValueValidatorInterface>> entry : valueValidatorMap.entrySet()) {
+			List<ValueValidatorInterface> entryValidatorList = entry.getValue();
+			for(ValueValidatorInterface valueValidatorInterface : entryValidatorList) {
+				if(valueValidatorInterface.getSource() instanceof SetErrorAble) {
+					((SetErrorAble)valueValidatorInterface.getSource()).betterSetError(null);
+				} else if(valueValidatorInterface.getSource() instanceof TextView) {
+					((TextView)valueValidatorInterface.getSource()).setError(null);
+				}
+			}
+		}
+		for(Entry<String, List<DependencyValidatorInterface>> entry : dependencyValidatorMap.entrySet()) {
+			List<DependencyValidatorInterface> entryValidatorList = entry.getValue();
+			for(DependencyValidatorInterface dependencyValidatorInterface : entryValidatorList) {
+				if(dependencyValidatorInterface.getSource() instanceof SetErrorAble) {
+					((SetErrorAble)dependencyValidatorInterface.getSource()).betterSetError(null);
+				} else if(dependencyValidatorInterface.getSource() instanceof TextView) {
+					((TextView)dependencyValidatorInterface.getSource()).setError(null);
+				}
+			}
+		}
+	}
+	
 	public HashMap<String, FinalValidationResult> validateAll() {
+		return validateAll(false);
+	}
+	
+	public HashMap<String, FinalValidationResult> validateAll(boolean removePreviouslySetErrors) {
 		if(DEBUG) Log.d(TAG, ".validateAll()...");
+		if(removePreviouslySetErrors) {
+			removePreviouslySetErrors();
+		}
 		HashMap<String, FinalValidationResult> finalValidationResultMap = new HashMap<String, FinalValidationResult>();
 		HashMap<String, List<ValueValidationResult>> valueValidationResultsMap = validateValues();
 		HashMap<String, List<DependencyValidationResult>> dependencyValidationResultsMap = validateDependencies(valueValidationResultsMap);
 		Object fieldSource = null;
-		//get a wholistic set of fields for which validations are applicable (since ValueValidators and DependencyValidators don't have to be added 1-for-1)
+		//get a full set of fields for which validations are applicable (since ValueValidators and DependencyValidators don't have to be added 1-for-1)
 		//...note: if a field was added to either ValueValidator list or DependencyValidator list or both but never had a validator associated with it, it won't be in this set.
 		Set<String> valueValidatorFieldsSet = valueValidationResultsMap.keySet();
 		Set<String> dependencyValidatorFieldsSet = dependencyValidationResultsMap.keySet();
@@ -246,9 +294,9 @@ public class ValidationManager {
 		return finalValidationResultMap;
 	}
 	
-	public boolean validateAllAndSetError(ScrollView containerScrollView) {
+	public boolean validateAllAndSetError() {
 		//validateAll
-		HashMap<String, FinalValidationResult> finalValidationResultMap = validateAll();
+		HashMap<String, FinalValidationResult> finalValidationResultMap = validateAll(true);
 		if(finalValidationResultMap.isEmpty()) {
 			//all valid
 			return true;
@@ -256,6 +304,9 @@ public class ValidationManager {
 			//something invalid
 			if(DEBUG) Log.d(TAG, "...at least one field is invalid, perhaps more.");
 			if(DEBUG) Log.d(TAG, "...number of invalid fields: "+Integer.toString(finalValidationResultMap.size()));
+			boolean setErrorAlreadyShown = false;
+			View firstInvalidView = null;
+			SpannableStringBuilder firstInvalidErrorText = null;
 			validationLoop: for(Entry<String, FinalValidationResult> entry : finalValidationResultMap.entrySet()) {
 				if(DEBUG) Log.d(TAG, "...validation result failed for field: "+entry.getKey());
 				FinalValidationResult aFinalValidationResult = entry.getValue();
@@ -266,18 +317,17 @@ public class ValidationManager {
 					invalidDependencyTakesPrecedence = true;
 					//if(DEBUG) Log.d(TAG, "aFinalValidationResult source's class: "+aFinalValidationResult.getSource().getClass().getSimpleName());
 					if("EditText".equals(aFinalValidationResult.getSource().getClass().getSimpleName())) {
-						//autoscroll to field
 						if(!invalidFieldHasAlreadyBeenFocused) {
-							//((EditText) aFinalValidationResult.getSource()).requestFocus();	//problematic for onFocusChangeListener (yields 2x focused EditTexts = BAD STUFF)
 							invalidFieldHasAlreadyBeenFocused = true;
 						}
 						//setError
 						SpannableStringBuilder errorText = new SpannableStringBuilder(aFinalValidationResult.getDependencyInvalidMessage());
 						((EditText) aFinalValidationResult.getSource()).setError(errorText);
-						//need to delay accessibility announcement so its the last View to steal focus
-						AnnounceForAccessibilityRunnable announceForAccessibilityRunnable = new AnnounceForAccessibilityRunnable(errorText);
-						mHandler.postDelayed(announceForAccessibilityRunnable, ACCESSIBILITY_ANNOUNCE_DELAY);
-						//break validationLoop;
+						setErrorAlreadyShown = true;
+						if(firstInvalidView == null) {
+							firstInvalidView = (View) aFinalValidationResult.getSource();
+							firstInvalidErrorText = errorText;
+						}
 					}
 				}
 				if(!aFinalValidationResult.isValueValid()) {
@@ -288,59 +338,50 @@ public class ValidationManager {
 						if(aFinalValidationResult.getSource() == null) {
 							if(DEBUG) Log.d(TAG, "...cannot display error balloon because source is null!");
 							//do nothing
-						} else if(aFinalValidationResult.getSource() instanceof TextView) {
-							//autoscroll to field
+						} else if(aFinalValidationResult.getSource() instanceof SetErrorAble) {
+							//only set (don't show) error for a SetErrorAble View if no other Views have had their error set.
+							//...to avoid having multiple ErrorPopups displayed at same time (at least until User moves focus)
+							SpannableStringBuilder errorText = new SpannableStringBuilder(aFinalValidationResult.getValueInvalidMessage());
+							if(DEBUG) Log.d(TAG, "...set and show custom error balloon...");
 							if(true || !invalidFieldHasAlreadyBeenFocused) {
-								((EditText) aFinalValidationResult.getSource()).requestFocus();
+								invalidFieldHasAlreadyBeenFocused = true;
+							}
+							//setError (for a button, this won't requestFocus() and won't show the message in a popup...it only sets the exclamation inner drawable)
+							((SetErrorAble) aFinalValidationResult.getSource()).betterSetError(errorText, false);
+							setErrorAlreadyShown = true;
+							if(firstInvalidView == null) {
+								firstInvalidView = (View) aFinalValidationResult.getSource();
+								firstInvalidErrorText = errorText;
+							}
+						} else if(aFinalValidationResult.getSource() instanceof TextView) {
+							if(DEBUG) Log.d(TAG, "...set and show native error balloon...");
+							if(!invalidFieldHasAlreadyBeenFocused) {
 								invalidFieldHasAlreadyBeenFocused = true;
 							}
 							//setError
 							SpannableStringBuilder errorText = new SpannableStringBuilder(aFinalValidationResult.getValueInvalidMessage());
-							((EditText) aFinalValidationResult.getSource()).setError(errorText);
-							//need to delay accessibility announcement so its the last View to steal focus
-							AnnounceForAccessibilityRunnable announceForAccessibilityRunnable = new AnnounceForAccessibilityRunnable(errorText);
-							mHandler.postDelayed(announceForAccessibilityRunnable, ACCESSIBILITY_ANNOUNCE_DELAY);
-							//return false;	//break now to block a subsequent EditText or SetErrorAble-View from showing another ErrorPopup
-						} else if(aFinalValidationResult.getSource() instanceof SetErrorAble) {
-							//note: this is seriously custom code, specific for this use-case, not very portable to other use-cases in its current form
-							if(DEBUG) Log.d(TAG, "...attempting to display custom error balloon...");
-							//autoscroll to field
-							if(true || !invalidFieldHasAlreadyBeenFocused) {
-								//((Button) aFinalValidationResult.getSource()).requestFocus();	//Button.requestFocus does nada
-								invalidFieldHasAlreadyBeenFocused = true;
-								if(containerScrollView != null) {
-									//forcibly scroll the scrollView as most non-EditText form Views won't receive focus
-									containerScrollView.scrollTo(0, 0);	//hardcoded scroll to top of form! TODO: make this scroll to dynamic position of invalid Button
-								}
+							((TextView) aFinalValidationResult.getSource()).setError(errorText);
+							setErrorAlreadyShown = true;
+							if(firstInvalidView == null) {
+								firstInvalidView = (View) aFinalValidationResult.getSource();
+								firstInvalidErrorText = errorText;
 							}
-							//setError (for a button, this won't requestFocus() and won't show the message in a popup...it only sets the exclamation inner drawable)
-							SpannableStringBuilder errorText = new SpannableStringBuilder(aFinalValidationResult.getValueInvalidMessage());
-							((SetErrorAble) aFinalValidationResult.getSource()).setError(errorText);
-							//need to delay accessibility announcement so its the last View to steal focus
-							AnnounceForAccessibilityRunnable announceForAccessibilityRunnable = new AnnounceForAccessibilityRunnable(errorText);
-							mHandler.postDelayed(announceForAccessibilityRunnable, ACCESSIBILITY_ANNOUNCE_DELAY);
-							//return false;	//break now to block a subsequent ErrorText stealing focus (and thereby showing more than 1x ErrorPopup)
-							//manually set the rest of error
-							/*
-							if(mCustomErrorBalloon == null) {
-								LayoutInflater lInflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-								mCustomErrorBalloon = (LinearLayout) lInflater.inflate(R.layout.proforma_custom_error_balloon, null);
-								TextView customErrorTextView = (TextView) mCustomErrorBalloon.findViewById(R.id.balloonTextView);
-								customErrorTextView.setText(errorText);
-								LinearLayout baseLinearLayout = (LinearLayout) findViewById(R.id.baseLinearLayout);
-								LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-								params.gravity = Gravity.RIGHT;
-								int buttonIndex = baseLinearLayout.indexOfChild((View) aFinalValidationResult.getSource());
-								if(DEBUG) Log.d(TAG, "...adding custom error balloon at position: "+buttonIndex);
-								baseLinearLayout.addView(mCustomErrorBalloon, buttonIndex+1, params);
-								//mCustomErrorBalloon.bringToFront();	//interestingly, this will cause the View to be shafted to bottom of LinearLayout
-							}
-							*/
 						} else {
 							if(DEBUG) Log.d(TAG, "...field does not support .setError()!");
 						}
 					}
 				}
+			}
+			//need to delay accessibility announcement so its the last View to steal focus
+			if(DEBUG) Log.d(TAG, "firstInvalidErrorText: "+firstInvalidErrorText);
+			AnnounceForAccessibilityRunnable announceForAccessibilityRunnable = new AnnounceForAccessibilityRunnable(firstInvalidErrorText);
+			mHandler.postDelayed(announceForAccessibilityRunnable, ACCESSIBILITY_ANNOUNCE_DELAY);
+			if(((View) firstInvalidView).isFocusable() && ((View) firstInvalidView).isFocusableInTouchMode()) {
+				((View) firstInvalidView).requestFocus();
+			} else if(firstInvalidView instanceof SetErrorAble) {
+				((SetErrorAble) firstInvalidView).betterSetError(firstInvalidErrorText, true);
+				((View) firstInvalidView).requestFocusFromTouch();	//probably won't do much
+				
 			}
 			return false;
 		}

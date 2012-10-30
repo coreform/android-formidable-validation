@@ -1,7 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="hello">Hello World, HomeActivity!</string>
     <string name="app_name">FormIdableValidation</string>
-
+	<string name="countries_prompt">Your country</string>
+    
+    <string-array name="countries_array">
+        <item value="@null">(select one)</item>
+        <item>Australia</item>
+        <item>Bahamas</item>
+        <item>Canada</item>
+        <item>India</item>
+        <item>Jamaica</item>
+        <item>New Zealand</item>
+        <item>Singapore</item>
+        <item>United Kingdom</item>
+    </string-array>
 </resources>

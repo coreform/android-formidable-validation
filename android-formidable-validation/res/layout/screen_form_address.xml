@@ -1,18 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="fill_parent"
+<LinearLayout android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:orientation="vertical" android:gravity="center_horizontal">
-
+    android:orientation="vertical" android:gravity="center_horizontal" xmlns:android="http://schemas.android.com/apk/res/android">
+
     <TextView
         android:id="@+id/headerTextView"
+        style="@style/ScreenTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
         android:text="FormIdableValidation"
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:textColor="#FF6600"
-        android:textStyle="bold" style="@style/ScreenTitle"/>
+        android:textStyle="bold"
+        android:visibility="gone" />
 
     <TextView
         android:id="@+id/subHeaderTextView"
@@ -31,6 +32,24 @@
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
             android:orientation="vertical" >
+
+            <TextView
+                android:id="@+id/field00LabelTextView"
+                style="@style/FormFieldLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="This form won&apos;t submit data anywhere, it&apos;s simply for demonstration purposes">
+                <requestFocus />
+            </TextView>
+
+            <com.coreform.open.android.formidablevalidation.SetErrorAbleCheckBox
+                android:id="@+id/field00CheckBox"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:focusableInTouchMode="true"
+                android:text="Understood" />
 
             <TextView
                 android:id="@+id/field01LabelTextView"
@@ -44,10 +63,7 @@
                 android:id="@+id/field01EditText"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:inputType="textNoSuggestions|textPostalAddress" >
-
-                <requestFocus />
-            </EditText>
+                android:inputType="textNoSuggestions|textPostalAddress" />
 
             <TextView
                 android:id="@+id/field02LabelTextView"
@@ -101,12 +117,15 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="Country" />
-
+            
             <com.coreform.open.android.formidablevalidation.SetErrorAbleSpinner
                 android:id="@+id/field05Spinner"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1" />
+                android:layout_weight="1"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:prompt="@string/countries_prompt" />
 
             <TextView
                 android:id="@+id/field06LabelTextView"
@@ -150,15 +169,42 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Favourite colour" />
-
-            <Button
+                android:text="Favourite colour" /><Button
                 android:id="@+id/field09Button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:focusableInTouchMode="true"
+                android:text="select" />
+            
+            <TextView
+                android:id="@+id/field09bLabelTextView"
+                style="@style/FormFieldLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Favourite colour again" /><com.coreform.open.android.formidablevalidation.SetErrorAbleButton
+                android:id="@+id/field09bButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:focusableInTouchMode="true"
                 android:text="select" />
 
+            <TextView
+                android:id="@+id/field10LabelTextView"
+                style="@style/FormFieldLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="SetErrorAbleEditText example" />
+
+            <com.coreform.open.android.formidablevalidation.SetErrorAbleEditText
+                android:id="@+id/field10EditText"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textNoSuggestions|textPostalAddress" />
+            
             <LinearLayout
                 android:id="@+id/footerLinearLayout"
                 android:layout_width="fill_parent"

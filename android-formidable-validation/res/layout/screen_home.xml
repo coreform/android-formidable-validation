@@ -3,13 +3,17 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:orientation="vertical" android:gravity="center_horizontal" android:background="#333333">
-
+
     <TextView
         android:id="@+id/headerTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
         android:text="FormIdableValidation"
-        android:textAppearance="?android:attr/textAppearanceLarge" android:layout_marginTop="12dp" android:textColor="#FF6600" android:textStyle="bold"/>
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:textColor="#FF6600"
+        android:textStyle="bold"
+        android:visibility="gone" />
 
     <TextView
         android:id="@+id/subHeaderTextView"
@@ -29,13 +33,14 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="24dp"
             android:text="Example #1: Address Form" />
-
+
         <Button
             android:id="@+id/example2Button"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="24dp"
-            android:text="Example #2: Colour Picker Form" />
+            android:text="Example #2: Colour Picker Form"
+            android:visibility="gone" />
 
     </LinearLayout>
 

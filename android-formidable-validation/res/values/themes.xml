@@ -41,8 +41,8 @@ please see themes_device_defaults.xml.
          #Theme_Holo} or {@link #Theme_DeviceDefault}.</p>
     -->
     <style name="Theme" parent="@android:style/Theme">
-        <item name="errorMessageBackground">@drawable/popup_inline_error</item>
-        <item name="errorMessageAboveBackground">@drawable/popup_inline_error_above</item>
+        <item name="errorMessageBackground">@drawable/popup_inline_error_green</item>
+        <item name="errorMessageAboveBackground">@drawable/popup_inline_error_above_green</item>
     </style>
 
     <!-- Honeycomb holographic theme (dark version).
@@ -66,8 +66,8 @@ please see themes_device_defaults.xml.
          with trailing _dark or _light specifiers if they are not shared between both light and
          dark versions of the theme. -->
     <style name="Theme.Holo" parent="@android:style/Theme.Holo">
-        <item name="errorMessageBackground">@drawable/popup_inline_error_holo_dark</item>
-        <item name="errorMessageAboveBackground">@drawable/popup_inline_error_above_holo_dark</item>
+        <item name="errorMessageBackground">@drawable/popup_inline_error_holo_dark_green</item>
+        <item name="errorMessageAboveBackground">@drawable/popup_inline_error_above_holo_dark_green</item>
     </style>
 
     <!-- Honeycomb holographic theme (light version).  The widgets in the
@@ -76,7 +76,7 @@ please see themes_device_defaults.xml.
          light; otherwise, it will be difficult to see the widgets.  This
          UI style also includes a full action bar by default. -->
     <style name="Theme.Holo.Light" parent="@android:style/Theme.Holo.Light">
-        <item name="errorMessageBackground">@drawable/popup_inline_error_holo_light</item>
-        <item name="errorMessageAboveBackground">@drawable/popup_inline_error_above_holo_light</item>
+        <item name="errorMessageBackground">@drawable/popup_inline_error_holo_light_green</item>
+        <item name="errorMessageAboveBackground">@drawable/popup_inline_error_above_holo_light_green</item>
     </style>
 </resources>

@@ -45,4 +45,4 @@ mValidationManager.validateAllAndSetError();
 
 ### View the resources in Android Assets Viewer:
 
-[http://www.cellebellum.net/AndroidAssetsViewer/?result_id=FormIdableValidation50905f3b3ee0e6.97611575][]
+http://www.cellebellum.net/AndroidAssetsViewer/?result_id=FormIdableValidation50905f3b3ee0e6.97611575

@@ -25,7 +25,7 @@ And validating the form is just  a matter of:
 mValidationManager.validateAllAndSetError();
 ```
 
-Some example screenshots:
+### Some example screenshots:
 
 ![Example 01: ValidationManager automatically calls setError on a Button.][example01]
 ![Example 02: ValidationManager automatically calls betterSetError on a SetErrorAbleButton.][example02]
@@ -36,9 +36,13 @@ Some example screenshots:
 ![Example 07: ValidationManager automatically calls setError on an EditText due to a validation dependent on a checked CheckBox.][example07]
 
 [example01]: https://github.com/coreform/android-formidable-validation/raw/master/doco/android-formidable-validation_example01.png "Example 01: ValidationManager automatically calls setError on a Button."
-[example02]: https://github.com/coreform/android-formidable-validation/raw/master/doco/android-formidable-validation_example01.png "Example 02: ValidationManager automatically calls setError on a Button."
-[example03]: https://github.com/coreform/android-formidable-validation/raw/master/doco/android-formidable-validation_example01.png "Example 03: ValidationManager automatically calls setError on a Button."
-[example04]: https://github.com/coreform/android-formidable-validation/raw/master/doco/android-formidable-validation_example01.png "Example 04: ValidationManager automatically calls setError on a Button."
-[example05]: https://github.com/coreform/android-formidable-validation/raw/master/doco/android-formidable-validation_example01.png "Example 05: ValidationManager automatically calls setError on a Button."
-[example06]: https://github.com/coreform/android-formidable-validation/raw/master/doco/android-formidable-validation_example01.png "Example 06: ValidationManager automatically calls setError on a Button."
-[example07]: https://github.com/coreform/android-formidable-validation/raw/master/doco/android-formidable-validation_example01.png "Example 07: ValidationManager automatically calls setError on a Button."
+[example02]: https://github.com/coreform/android-formidable-validation/raw/master/doco/android-formidable-validation_example02.png "Example 02: ValidationManager automatically calls betterSetError on a SetErrorAbleButton."
+[example03]: https://github.com/coreform/android-formidable-validation/raw/master/doco/android-formidable-validation_example03.png "Example 03: ValidationManager automatically calls betterSetError on a SetErrorAbleCheckBox."
+[example04]: https://github.com/coreform/android-formidable-validation/raw/master/doco/android-formidable-validation_example04.png "Example 04: ValidationManager automatically calls setError on an EditText."
+[example05]: https://github.com/coreform/android-formidable-validation/raw/master/doco/android-formidable-validation_example05.png "Example 05: ValidationManager automatically calls betterSetError on a SetErrorAbleSpinner."
+[example06]: https://github.com/coreform/android-formidable-validation/raw/master/doco/android-formidable-validation_example06.png "Example 06: ValidationManager automatically calls betterSetError on a SetErrorAbleEditText."
+[example07]: https://github.com/coreform/android-formidable-validation/raw/master/doco/android-formidable-validation_example07.png "Example 07: ValidationManager automatically calls setError on an EditText due to a validation dependent on a checked CheckBox."
+
+### View the resources in Android Assets Viewer:
+
+[http://www.cellebellum.net/AndroidAssetsViewer/?result_id=FormIdableValidation50905f3b3ee0e6.97611575][]
